@@ -15,7 +15,11 @@
 	<name>currency-api</name>
 	<description>Currency api with Spring Boot</description>
 	<properties>
+<<<<<<< HEAD
 		<java.version>11</java.version>
+=======
+		<java.version>15</java.version>
+>>>>>>> 08946baaed214130942ec048f7e91c0a04295528
 	</properties>
 	<dependencies>
 		<dependency>
