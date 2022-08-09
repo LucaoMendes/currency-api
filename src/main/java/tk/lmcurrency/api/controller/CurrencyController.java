@@ -3,6 +3,7 @@ package tk.lmcurrency.api.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import net.bytebuddy.description.annotation.AnnotationValue.Sort;
 import tk.lmcurrency.api.model.Currency;
 import tk.lmcurrency.api.repository.CurrencyRepository;
 import tk.lmcurrency.api.services.CurrencyServices;
@@ -99,6 +101,8 @@ public class CurrencyController {
 		pFinalDate.setDate(Integer.parseInt(finalDateSplited[0]));
 		pStartDate.setMonth(Integer.parseInt(startDateSplited[1]) - 1);
 		pFinalDate.setMonth(Integer.parseInt(finalDateSplited[1]) - 1);
+		pStartDate.setYear(Integer.parseInt(startDateSplited[2]) - 1900);
+		pFinalDate.setYear(Integer.parseInt(finalDateSplited[2]) - 1900);
 
 		if (pFinalDate.before(pStartDate) || pFinalDate.after(new Date()) || pStartDate.after(new Date())) {
 			System.out.println("ERRO \n Data Inicial: " + pStartDate + " \n Data Final:" + pFinalDate
@@ -175,7 +179,8 @@ public class CurrencyController {
 			limitDateFinish.setHours(23);
 			limitDateStart.setHours(0);
 
-			List<Currency> queryCurrencys = currencyRepository.findByThisDateBetween(limitDateStart, limitDateFinish);
+//			List<Currency> queryCurrencys = currencyRepository.findByThisDateBetween(limitDateStart, limitDateFinish);
+			List<Currency> queryCurrencys = reloadCurrencyByTime(limitDateStart,limitDateFinish);
 			limitDateFinish.setTime(limitDateFinish.getTime() + 24 * 60 * 60 * 1000L);
 			if (queryCurrencys.size() > 0) {
 				filteredCurrency.add(queryCurrencys.get(queryCurrencys.size() - 1));
@@ -190,38 +195,71 @@ public class CurrencyController {
 
 	@GetMapping(path = "/reloadCurrency")
 	public void reloadAllCurrency() throws Exception {
-		try {
-			currencyRepository.deleteAll();
-			Date startDate = new Date();
-			startDate.setTime(startDate.getTime() - 2 * 30 * 24 * 60 * 60 * 1000L);
-			Date finalDate = new Date();
-			ArrayList<JsonNode> response = CurrencyServices.requestCurrencyToApi(startDate, finalDate);
-			response.forEach(currency -> {
-				try {
-					saveCurrency(currency);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			});
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		//Removido a busca para api externa por motivos de quota :( Porém os dados foram gerados automaticamente 
+//		try {
+//			currencyRepository.deleteAll();
+//			Date startDate = new Date();
+//			startDate.setTime(startDate.getTime() - 2 * 30 * 24 * 60 * 60 * 1000L);
+//			Date finalDate = new Date();
+//			ArrayList<JsonNode> response = CurrencyServices.requestCurrencyToApi(startDate, finalDate);
+//			response.forEach(currency -> {
+//				try {
+//					saveCurrency(currency);
+//				} catch (Exception e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			});
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		Date startDate = new Date();
+		startDate.setTime(startDate.getTime() - 12 * 30 * 24 * 60 * 60 * 1000L);
+		Date finalDate = new Date();
+//		currencyRepository.deleteAll();
+		reloadCurrencyByTime(startDate,finalDate);
+		
+		
+	}
+	
+	private List<Currency> reloadCurrencyByTime(Date startDate,Date finalDate) {
+		System.out.println("[ReloadCurrencyByTime] Reloading Currencys...");
+		List<Currency> allCurrencys = new ArrayList<Currency>();
+		Date thisDate = new Date();		
+		thisDate.setTime(startDate.getTime());
+		while(thisDate.before(finalDate)) {
+			Date tempStartDate = new Date();
+			Date tempFinalDate = new Date();
+			tempStartDate.setTime(thisDate.getTime());
+			tempFinalDate.setTime(thisDate.getTime());
+			
+			tempStartDate.setHours(0);
+			tempStartDate.setMinutes(0);
+			tempStartDate.setSeconds(0);
+			
+			tempFinalDate.setHours(23);
+			tempFinalDate.setMinutes(59);
+			tempFinalDate.setSeconds(59);
+			
+			if(currencyRepository.findByThisDateBetween(tempStartDate, tempFinalDate).size() > 0) {
+				thisDate.setTime(thisDate.getTime() + 60*60*1000L);
+				continue;
+			}else {
+				Currency tempCurrency = new Currency();
+				tempCurrency.setBrlValue( Math.random() * 1.5 + 5);
+				tempCurrency.setThisDate(new Date(thisDate.getTime()));
+				tempCurrency.setThisHour(thisDate.getHours());
+				allCurrencys.add(tempCurrency);
+				thisDate.setTime(thisDate.getTime() + 60*60*1000L);
+			}
+			
 		}
+		currencyRepository.saveAll(allCurrencys);
+		System.out.println("[ReloadCurrencyByTime] Finished.");
+		
+		return allCurrencys.size() == 0 ? currencyRepository.findByThisDateBetween(startDate, finalDate) : allCurrencys;
 	}
 
-	@GetMapping(path = "/refresh")
-	public void refresh() throws Exception {
-		System.out.println("Reloading Currency");
-		ArrayList<JsonNode> currencys = CurrencyServices.requestCurrencyToApi(null, null);
-		currencys.forEach(c -> {
-			try {
-				saveCurrency(c);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
-	}
 
 }

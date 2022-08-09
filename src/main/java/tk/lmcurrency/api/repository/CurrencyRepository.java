@@ -15,4 +15,6 @@ public interface CurrencyRepository extends JpaRepository<Currency, Long> {
 
 	@Query(value = "SELECT * FROM currency c ORDER BY id DESC LIMIT 1", nativeQuery = true)
 	Currency findLastCurrency();
+	
+	List<Currency> findByThisDate(Date thisDate);
 }
