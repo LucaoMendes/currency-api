@@ -139,6 +139,7 @@ public class CurrencyController {
 	@GetMapping(path = "/today")
 	public List<Currency> today() {
 		Date today = new Date();
+		today.setHours(today.getHours()-3);
 		Date startDate = new Date();
 		startDate.setHours(0);
 		startDate.setMinutes(0);
