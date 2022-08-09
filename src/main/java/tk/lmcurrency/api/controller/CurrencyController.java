@@ -76,7 +76,6 @@ public class CurrencyController {
 			tempCurrency.setThisHour(currencyDate.getHours());
 			tempCurrency.setBrlValue(Double.parseDouble(rootNode.get("rates").get("BRL").toString()));
 
-			System.out.println(tempCurrency);
 			currencyRepository.save(tempCurrency);
 		}
 	}
@@ -113,8 +112,6 @@ public class CurrencyController {
 		pStartDate.setHours(0);
 		pFinalDate.setHours(23);
 
-		System.out.println("Realizando busca de currencys de " + pStartDate.toLocaleString() + " até "
-				+ pFinalDate.toLocaleString());
 
 		List<Currency> currencyReturn = currencyRepository.findByThisDateBetween(pStartDate, pFinalDate);
 
@@ -146,8 +143,6 @@ public class CurrencyController {
 		startDate.setHours(0);
 		startDate.setMinutes(0);
 		startDate.setSeconds(0);
-		System.out.println(today);
-		System.out.println(startDate);
 		return currencyRepository.findByThisDateBetween(startDate, today);
 	}
 
@@ -174,7 +169,6 @@ public class CurrencyController {
 		List<Currency> filteredCurrency = new ArrayList<Currency>();
 
 		while (limitDateFinish.before(today)) {
-			System.out.println(limitDateFinish);
 			limitDateStart.setTime(limitDateFinish.getTime());
 			limitDateFinish.setHours(23);
 			limitDateStart.setHours(0);
