@@ -139,11 +139,7 @@ public class CurrencyController {
 	@GetMapping(path = "/today")
 	public List<Currency> today() {
 		Date today = new Date();
-		today.setHours(today.getHours()-3);
-		Date startDate = new Date();
-		startDate.setHours(0);
-		startDate.setMinutes(0);
-		startDate.setSeconds(0);
+		Date startDate = new Date(today.getTime() - 24 * 60 * 60 * 1000L);
 		return currencyRepository.findByThisDateBetween(startDate, today);
 	}
 
